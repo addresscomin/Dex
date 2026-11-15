@@ -83,11 +83,13 @@ class BlockerService : AccessibilityService() {
         val dailyBudgetMs = Prefs.getInt(this, "limit", 180).coerceIn(15, 720) * 60_000L
         val perAppLimitMs = Prefs.getInt(this, "app_limit", 30).coerceIn(5, 720) * 60_000L
 
+        // A voluntary 5-minute pass must work even during a schedule or after a limit.
+        if (now < Prefs.allowUntil(this, pkg)) return
+
         val mode = when {
             Prefs.scheduleActive(this) -> "schedule"
             hasUsage && Prefs.totalSelectedUsageTodayMs(this) >= dailyBudgetMs -> "limit"
             hasUsage && Prefs.appUsageTodayMs(this, pkg) >= perAppLimitMs -> "limit"
-            now < Prefs.allowUntil(this, pkg) -> return
             else -> "intent"
         }
 

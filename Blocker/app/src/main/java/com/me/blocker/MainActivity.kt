@@ -14,6 +14,7 @@ import android.widget.*
 class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var limitEt: EditText
+    private lateinit var appLimitEt: EditText
     private lateinit var waitEt: EditText
     private lateinit var startEt: EditText
     private lateinit var endEt: EditText
@@ -49,9 +50,10 @@ class MainActivity : Activity() {
             setOnClickListener { startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
         })
         limitEt = field(h, "Daily combined limit across selected apps (minutes)", Prefs.getInt(this, "limit", 180))
+        appLimitEt = field(h, "Daily limit per selected app (minutes)", Prefs.getInt(this, "app_limit", 30))
         waitEt = field(h, "Intention wait (seconds)", Prefs.getInt(this, "wait", 10))
         schedSw = Switch(this).apply {
-            text = "Schedule: is time poora block"; isChecked = Prefs.getBool(this@MainActivity, "sched_on", false)
+            text = "Schedule: selected apps block"; isChecked = Prefs.getBool(this@MainActivity, "sched_on", false)
         }
         h.addView(schedSw)
         startEt = field(h, "Start hour (0-23)", Prefs.getInt(this, "sched_start", 22))
@@ -69,13 +71,16 @@ class MainActivity : Activity() {
         val ops = getSystemService(APP_OPS_SERVICE) as AppOpsManager
         val usage = ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), packageName) ==
             AppOpsManager.MODE_ALLOWED
-        status.text = "Accessibility: ${if (acc) "ON ✓" else "OFF ✗"}\nUsage access: ${if (usage) "ON ✓" else "OFF ✗"}"
+        val used = if (usage) try { Prefs.totalSelectedUsageTodayMs(this) / 60_000L } catch (_: Exception) { 0L } else 0L
+        status.text = "Accessibility: ${if (acc) "ON ✓" else "OFF ✗"}\nUsage access: ${if (usage) "ON ✓" else "OFF ✗"}" +
+            if (usage) "\nSelected apps used today: ${used} min" else ""
     }
 
     override fun onPause() {
         super.onPause()
         fun n(e: EditText, d: Int) = e.text.toString().toIntOrNull() ?: d
-        Prefs.putInt(this, "limit", n(limitEt, 180))
+        Prefs.putInt(this, "limit", n(limitEt, 180).coerceIn(15, 720))
+        Prefs.putInt(this, "app_limit", n(appLimitEt, 30).coerceIn(5, 720))
         Prefs.putInt(this, "wait", n(waitEt, 10))
         Prefs.putInt(this, "sched_start", n(startEt, 22).coerceIn(0, 23))
         Prefs.putInt(this, "sched_end", n(endEt, 6).coerceIn(0, 23))

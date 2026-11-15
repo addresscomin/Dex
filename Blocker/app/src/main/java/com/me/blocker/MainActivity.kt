@@ -48,7 +48,7 @@ class MainActivity : Activity() {
             text = "2. Usage access ON karo (My Blocker)"
             setOnClickListener { startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
         })
-        limitEt = field(h, "Daily limit per app (minutes)", Prefs.getInt(this, "limit", 180))
+        limitEt = field(h, "Daily combined limit across selected apps (minutes)", Prefs.getInt(this, "limit", 180))
         waitEt = field(h, "Intention wait (seconds)", Prefs.getInt(this, "wait", 10))
         schedSw = Switch(this).apply {
             text = "Schedule: is time poora block"; isChecked = Prefs.getBool(this@MainActivity, "sched_on", false)

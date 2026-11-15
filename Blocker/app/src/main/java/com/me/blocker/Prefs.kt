@@ -15,20 +15,25 @@ object Prefs {
     fun putBool(c: Context, k: String, v: Boolean) = p(c).edit().putBoolean(k, v).apply()
     fun allowUntil(c: Context, pkg: String) = p(c).getLong("allow_$pkg", 0L)
     fun setAllowUntil(c: Context, pkg: String, t: Long) = p(c).edit().putLong("allow_$pkg", t).apply()
+
     fun scheduleActive(c: Context): Boolean {
         if (!getBool(c, "sched_on", false)) return false
-        val s = getInt(c, "sched_start", 22)
-        val e = getInt(c, "sched_end", 6)
+        val s = getInt(c, "sched_start", 22).coerceIn(0, 23)
+        val e = getInt(c, "sched_end", 6).coerceIn(0, 23)
         val h = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-        return if (s < e) h in s until e else (h >= s || h < e)
+        return if (s == e) true else if (s < e) h in s until e else (h >= s || h < e)
     }
-    fun usedTodayMs(c: Context, pkg: String): Long {
+
+    // One shared daily budget across every app the user deliberately selected.
+    fun totalSelectedUsageTodayMs(c: Context): Long {
+        val selected = blocked(c)
+        if (selected.isEmpty()) return 0L
         val usm = c.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val cal = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
         }
-        val m = usm.queryAndAggregateUsageStats(cal.timeInMillis, System.currentTimeMillis())
-        return m[pkg]?.totalTimeInForeground ?: 0L
+        val stats = usm.queryAndAggregateUsageStats(cal.timeInMillis, System.currentTimeMillis())
+        return selected.sumOf { stats[it]?.totalTimeInForeground ?: 0L }
     }
 }

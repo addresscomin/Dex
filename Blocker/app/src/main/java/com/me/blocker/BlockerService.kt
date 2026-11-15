@@ -40,11 +40,13 @@ class BlockerService : AccessibilityService() {
         }
         handler.removeCallbacks(foregroundCheck)
         handler.post(foregroundCheck)
+        DebugLog.add(this, "Accessibility service connected")
         Log.i(TAG, "Accessibility blocker connected")
     }
 
     override fun onDestroy() {
         handler.removeCallbacks(foregroundCheck)
+        DebugLog.add(this, "Accessibility service disconnected")
         Log.i(TAG, "Accessibility blocker disconnected")
         super.onDestroy()
     }
@@ -65,6 +67,7 @@ class BlockerService : AccessibilityService() {
             ?: return
 
         if (pkg == packageName) return
+        DebugLog.add(this, "Event ${event.eventType}: foreground=$pkg")
         evaluateForegroundPackage(pkg)
     }
 
@@ -105,9 +108,11 @@ class BlockerService : AccessibilityService() {
                         .putExtra("pkg", pkg)
                 )
             } catch (e: Exception) {
+                DebugLog.add(this, "ERROR showing blocker: ${e.javaClass.simpleName}")
                 Log.e(TAG, "Could not show blocker for $pkg", e)
             }
         }, HOME_BEFORE_BLOCK_MS)
+        DebugLog.add(this, "BLOCK triggered: $pkg ($mode)")
         Log.i(TAG, "Blocking selected package: $pkg ($mode)")
     }
 

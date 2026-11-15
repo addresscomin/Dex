@@ -91,7 +91,7 @@ class MainActivity : Activity() {
             // Keep essential phone, emergency, system UI and settings packages outside the block list.
             .filter { (pkg, _) ->
                 pkg != packageName &&
-                !listOf("dialer", "incallui", "telecom", "emergency", "systemui",
+                !listOf("dialer", "phone", "incallui", "telecom", "emergency", "systemui",
                     "permissioncontroller", "packageinstaller", "settings").any { key ->
                     pkg.contains(key, ignoreCase = true)
                 }

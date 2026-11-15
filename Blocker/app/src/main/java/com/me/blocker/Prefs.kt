@@ -17,9 +17,11 @@ object Prefs {
     fun allowUntil(c: Context, pkg: String) = p(c).getLong("allow_$pkg", 0L)
     fun setAllowUntil(c: Context, pkg: String, t: Long) = p(c).edit().putLong("allow_$pkg", t).apply()
 
-    fun hasUsageAccess(c: Context): Boolean {
+    fun hasUsageAccess(c: Context): Boolean = try {
         val ops = c.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        return ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), c.packageName) == AppOpsManager.MODE_ALLOWED
+        ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), c.packageName) == AppOpsManager.MODE_ALLOWED
+    } catch (_: Exception) {
+        false
     }
 
     fun scheduleActive(c: Context): Boolean {
@@ -34,22 +36,30 @@ object Prefs {
         if (!hasUsageAccess(c)) return 0L
         val selected = blocked(c)
         if (selected.isEmpty()) return 0L
-        val usm = c.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-        val cal = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        return try {
+            val usm = c.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+            val cal = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+            }
+            val stats = usm.queryAndAggregateUsageStats(cal.timeInMillis, System.currentTimeMillis())
+            selected.sumOf { stats[it]?.totalTimeInForeground ?: 0L }
+        } catch (_: Exception) {
+            0L
         }
-        val stats = usm.queryAndAggregateUsageStats(cal.timeInMillis, System.currentTimeMillis())
-        return selected.sumOf { stats[it]?.totalTimeInForeground ?: 0L }
     }
 
     fun appUsageTodayMs(c: Context, pkg: String): Long {
         if (!hasUsageAccess(c)) return 0L
-        val usm = c.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-        val cal = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        return try {
+            val usm = c.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+            val cal = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+            }
+            usm.queryAndAggregateUsageStats(cal.timeInMillis, System.currentTimeMillis())[pkg]?.totalTimeInForeground ?: 0L
+        } catch (_: Exception) {
+            0L
         }
-        return usm.queryAndAggregateUsageStats(cal.timeInMillis, System.currentTimeMillis())[pkg]?.totalTimeInForeground ?: 0L
     }
 }

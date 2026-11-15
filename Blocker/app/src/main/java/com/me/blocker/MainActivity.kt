@@ -189,8 +189,7 @@ class MainActivity : Activity() {
     }
     private fun hasUsageAccess(): Boolean {
         val ops = getSystemService(APP_OPS_SERVICE) as AppOpsManager
-        return ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), packageName) ==
-            AppOpsManager.MODE_ALLOWED
+        return Prefs.hasUsageAccess(this)
     }
 
     private fun refreshStatus() {
@@ -202,8 +201,8 @@ class MainActivity : Activity() {
         startButton.text = if (running) "STOP APP BLOCKING" else "START APP BLOCKING"
         startButton.setTextColor(if (running) Color.WHITE else bg)
         startButton.background = shape(if (running) Color.rgb(172, 82, 82) else accent, 16)
-        accessText.text = "Accessibility service: " + if (acc) "Enabled ✓" else "Not enabled"
-        usageText.text = "Usage access: " + if (usage) "Enabled ✓" else "Not enabled"
+        accessText.text = "Accessibility service (required): " + if (acc) "Enabled ✓" else "Not enabled"
+        usageText.text = "Usage access (daily limits): " + if (usage) "Enabled ✓" else "Optional — enable for time limits"
         updateCounters()
     }
 
@@ -231,7 +230,8 @@ class MainActivity : Activity() {
             return
         }
         Prefs.putBool(this, "is_blocking", true); refreshStatus()
-        Toast.makeText(this, "App blocking started.", Toast.LENGTH_SHORT).show()
+        val note = if (hasUsageAccess()) "App blocking started." else "Blocking started. Enable Usage Access to activate daily limits."
+        Toast.makeText(this, note, Toast.LENGTH_LONG).show()
     }
 
     override fun onResume() { super.onResume(); if (::statusText.isInitialized) refreshStatus() }

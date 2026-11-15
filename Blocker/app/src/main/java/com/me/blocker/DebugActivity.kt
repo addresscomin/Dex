@@ -48,6 +48,6 @@ class DebugActivity : Activity() {
         refresh()
     }
     private fun refresh() {
-        events.text = DebugLog.read(this).ifEmpty { listOf("No events recorded yet.") }.joinToString("\\n")
+        events.text = DebugLog.read(this).ifEmpty { listOf("No events recorded yet.") }.joinToString("\n")
     }
 }

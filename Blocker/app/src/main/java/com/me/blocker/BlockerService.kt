@@ -31,12 +31,13 @@ class BlockerService : AccessibilityService() {
     }
 
     private fun evaluate(pkg: String) {
-        if (pkg !in Prefs.blocked(this)) return
+        val selected = Prefs.blocked(this)
+        if (pkg !in selected) return
         val now = System.currentTimeMillis()
-        val limitMs = Prefs.getInt(this, "limit", 30) * 60_000L
+        val dailyBudgetMs = Prefs.getInt(this, "limit", 180).coerceIn(15, 720) * 60_000L
         val mode = when {
             Prefs.scheduleActive(this) -> "schedule"
-            Prefs.usedTodayMs(this, pkg) >= limitMs -> "limit"
+            Prefs.totalSelectedUsageTodayMs(this) >= dailyBudgetMs -> "limit"
             now < Prefs.allowUntil(this, pkg) -> return
             else -> "intent"
         }

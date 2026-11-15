@@ -7,7 +7,7 @@ on:
       - "README.md"
       - ".github/workflows/android-build.yml"
 permissions:
-  contents: read
+  contents: write
   actions: read
 jobs:
   build:
@@ -32,3 +32,10 @@ jobs:
           path: Blocker/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+      - name: Publish APK download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: myblocker-build-${{ github.run_number }}
+          name: MyBlocker build ${{ github.run_number }}
+          prerelease: true
+          files: Blocker/app/build/outputs/apk/debug/app-debug.apk

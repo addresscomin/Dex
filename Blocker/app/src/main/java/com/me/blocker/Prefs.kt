@@ -37,3 +37,13 @@ object Prefs {
         return selected.sumOf { stats[it]?.totalTimeInForeground ?: 0L }
     }
 }
+
+    fun appUsageTodayMs(c: Context, pkg: String): Long {
+        val usm = c.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }
+        return usm.queryAndAggregateUsageStats(cal.timeInMillis, System.currentTimeMillis())[pkg]
+            ?.totalTimeInForeground ?: 0L
+    }

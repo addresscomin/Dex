@@ -89,6 +89,9 @@ class MainActivity : Activity() {
         access.addView(actionButton("Enable Usage Access") {
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         })
+        access.addView(actionButton("Open Debug & Test") {
+            startActivity(Intent(this, DebugActivity::class.java))
+        })
 
         val budget = card(root)
         budget.addView(text("DAILY FOCUS LIMIT", 12f, Color.WHITE, true))

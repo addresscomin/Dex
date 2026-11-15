@@ -38,6 +38,7 @@ class BlockerService : AccessibilityService() {
         val mode = when {
             Prefs.scheduleActive(this) -> "schedule"
             Prefs.totalSelectedUsageTodayMs(this) >= dailyBudgetMs -> "limit"
+            Prefs.appUsageTodayMs(this, pkg) >= Prefs.getInt(this, "app_limit", 30).coerceIn(5, 720) * 60_000L -> "limit"
             now < Prefs.allowUntil(this, pkg) -> return
             else -> "intent"
         }

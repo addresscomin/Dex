@@ -31,6 +31,7 @@ class BlockerService : AccessibilityService() {
     }
 
     private fun evaluate(pkg: String) {
+        if (!Prefs.getBool(this, "is_blocking", false)) return
         val selected = Prefs.blocked(this)
         if (pkg !in selected) return
         val now = System.currentTimeMillis()

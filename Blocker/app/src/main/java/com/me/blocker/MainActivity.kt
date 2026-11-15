@@ -87,7 +87,15 @@ class MainActivity : Activity() {
         private val apps = pm.queryIntentActivities(
             Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)
             .map { it.activityInfo.packageName to it.loadLabel(pm).toString() }
-            .distinctBy { it.first }.filter { it.first != packageName }
+            .distinctBy { it.first }
+            // Keep essential phone, emergency, system UI and settings packages outside the block list.
+            .filter { (pkg, _) ->
+                pkg != packageName &&
+                !listOf("dialer", "incallui", "telecom", "emergency", "systemui",
+                    "permissioncontroller", "packageinstaller", "settings").any { key ->
+                    pkg.contains(key, ignoreCase = true)
+                }
+            }
             .sortedBy { it.second.lowercase() }
         private val sel = Prefs.blocked(this@MainActivity)
 

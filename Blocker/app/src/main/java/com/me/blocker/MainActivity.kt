@@ -48,7 +48,7 @@ class MainActivity : Activity() {
             text = "2. Usage access ON karo (My Blocker)"
             setOnClickListener { startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
         })
-        limitEt = field(h, "Daily limit per app (minutes)", Prefs.getInt(this, "limit", 30))
+        limitEt = field(h, "Daily limit per app (minutes)", Prefs.getInt(this, "limit", 180))
         waitEt = field(h, "Intention wait (seconds)", Prefs.getInt(this, "wait", 10))
         schedSw = Switch(this).apply {
             text = "Schedule: is time poora block"; isChecked = Prefs.getBool(this@MainActivity, "sched_on", false)
@@ -75,7 +75,7 @@ class MainActivity : Activity() {
     override fun onPause() {
         super.onPause()
         fun n(e: EditText, d: Int) = e.text.toString().toIntOrNull() ?: d
-        Prefs.putInt(this, "limit", n(limitEt, 30))
+        Prefs.putInt(this, "limit", n(limitEt, 180))
         Prefs.putInt(this, "wait", n(waitEt, 10))
         Prefs.putInt(this, "sched_start", n(startEt, 22).coerceIn(0, 23))
         Prefs.putInt(this, "sched_end", n(endEt, 6).coerceIn(0, 23))
@@ -97,7 +97,14 @@ class MainActivity : Activity() {
                 }
             }
             .sortedBy { it.second.lowercase() }
-        private val sel = Prefs.blocked(this@MainActivity)
+        private val appsToProtect = apps.map { it.first }.toSet()
+        private val sel = Prefs.blocked(this@MainActivity).also {
+            if (!Prefs.getBool(this@MainActivity, "first_run_selection_done", false)) {
+                it.addAll(appsToProtect)
+                Prefs.setBlocked(this@MainActivity, it)
+                Prefs.putBool(this@MainActivity, "first_run_selection_done", true)
+            }
+        }
 
         override fun getCount() = apps.size
         override fun getItem(i: Int) = apps[i]

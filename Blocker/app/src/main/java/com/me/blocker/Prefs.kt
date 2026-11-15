@@ -36,8 +36,6 @@ object Prefs {
         val stats = usm.queryAndAggregateUsageStats(cal.timeInMillis, System.currentTimeMillis())
         return selected.sumOf { stats[it]?.totalTimeInForeground ?: 0L }
     }
-}
-
     fun appUsageTodayMs(c: Context, pkg: String): Long {
         val usm = c.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val cal = Calendar.getInstance().apply {
@@ -47,3 +45,5 @@ object Prefs {
         return usm.queryAndAggregateUsageStats(cal.timeInMillis, System.currentTimeMillis())[pkg]
             ?.totalTimeInForeground ?: 0L
     }
+
+}

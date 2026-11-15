@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="service_desc">Selected apps ko block karne ke liye foreground app detect karta hai.</string>
+</resources>

@@ -59,6 +59,12 @@ class BlockActivity : Activity() {
             setOnClickListener { goHome() }
         }
         card.addView(home, LinearLayout.LayoutParams(-1, dp(52)))
+        val dial = Button(this).apply {
+            text = "OPEN PHONE DIALER"; isAllCaps = false; textSize = 13f
+            setTextColor(Color.WHITE); background = panel(Color.rgb(42, 56, 64), 15)
+            setOnClickListener { try { startActivity(Intent(Intent.ACTION_DIAL)) } catch (_: Exception) { } }
+        }
+        card.addView(dial, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(10) })
         if (mode == "intent") {
             val cont = Button(this).apply {
                 isEnabled = false; isAllCaps = false; textSize = 13f

@@ -188,7 +188,6 @@ class MainActivity : Activity() {
         return enabled.split(':').any { it.contains(packageName, ignoreCase = true) }
     }
     private fun hasUsageAccess(): Boolean {
-        val ops = getSystemService(APP_OPS_SERVICE) as AppOpsManager
         return Prefs.hasUsageAccess(this)
     }
 
@@ -221,8 +220,8 @@ class MainActivity : Activity() {
         if (Prefs.getBool(this, "is_blocking", false)) {
             Prefs.putBool(this, "is_blocking", false); refreshStatus(); return
         }
-        if (!hasAccessibility() || !hasUsageAccess()) {
-            Toast.makeText(this, "Enable both Accessibility and Usage Access first.", Toast.LENGTH_LONG).show()
+        if (!hasAccessibility()) {
+            Toast.makeText(this, "Enable Accessibility first. Usage Access is only needed for daily time limits.", Toast.LENGTH_LONG).show()
             refreshStatus(); return
         }
         if (selected.isEmpty()) {

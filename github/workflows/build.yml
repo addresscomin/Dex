@@ -1,19 +1,55 @@
-name: Build APK
-on: workflow_dispatch
+name: Build Guard Cleaner
+on:
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: unzip -q MyBlocker-project.zip
+
+      - name: Find and extract the cleaner zip
+        run: |
+          ZIP=$(ls -1 DisciplineGuard_v8_cleaner*.zip 2>/dev/null | head -1)
+          echo "Zip found: $ZIP"
+          if [ -z "$ZIP" ]; then echo "ERROR: DisciplineGuard_v8_cleaner zip not found in repo root"; ls -la; exit 1; fi
+          rm -rf _clean
+          unzip -q "$ZIP" -d _clean
+          SETTINGS=$(find _clean -name settings.gradle.kts | head -1)
+          if [ -z "$SETTINGS" ]; then echo "ERROR: settings.gradle.kts not found inside zip"; find _clean | head -40; exit 1; fi
+          echo "PROJECT_DIR=$(dirname "$SETTINGS")" >> $GITHUB_ENV
+
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: 17 }
-      - uses: android-actions/setup-android@v3
+        with:
+          distribution: temurin
+          java-version: 17
+
       - uses: gradle/actions/setup-gradle@v4
-        with: { gradle-version: 8.9 }
-      - run: gradle assembleDebug
-        working-directory: Blocker
+        with:
+          gradle-version: 8.9
+
+      - name: Build debug APK
+        working-directory: ${{ env.PROJECT_DIR }}
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/build.log"
+
+      - name: Show the real error (only when build failed)
+        if: failure()
+        run: |
+          echo "===== ERRORS ====="
+          grep -E "^e: |What went wrong|Execution failed|error:|Could not|Unresolved" -A4 "$RUNNER_TEMP/build.log" | head -150 || true
+          echo "===== END ====="
+
+      - name: Collect APK
+        run: |
+          APK=$(find "$PROJECT_DIR/app/build/outputs/apk/debug" -name "*.apk" | head -1)
+          if [ -z "$APK" ]; then echo "ERROR: no APK produced"; exit 1; fi
+          mkdir -p apk-out
+          cp "$APK" apk-out/GuardCleaner.apk
+          ls -la apk-out
+
       - uses: actions/upload-artifact@v4
         with:
-          name: blocker-apk
-          path: Blocker/app/build/outputs/apk/debug/app-debug.apk
+          name: GuardCleaner-apk
+          path: apk-out/GuardCleaner.apk
